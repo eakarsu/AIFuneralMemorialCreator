@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { rsvpEntries } from '../api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 
 const RSVP_STATUSES = [
   { value: 'pending', label: 'Pending' },
@@ -23,6 +24,7 @@ const emptyForm = {
 
 const RSVPPage = ({ showToast }) => {
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list');
   const [selected, setSelected] = useState(null);
@@ -32,14 +34,15 @@ const RSVPPage = ({ showToast }) => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await rsvpEntries.getAll();
-      setItems(data);
+      const data = await rsvpEntries.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load RSVP entries', 'error');
     } finally {
@@ -99,7 +102,7 @@ const RSVPPage = ({ showToast }) => {
         showToast('RSVP entry created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to save RSVP entry', 'error');
     } finally {
@@ -114,7 +117,7 @@ const RSVPPage = ({ showToast }) => {
       showToast('RSVP entry deleted', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete RSVP entry', 'error');
     }
@@ -182,6 +185,7 @@ const RSVPPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New RSVP</button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -206,6 +210,12 @@ const RSVPPage = ({ showToast }) => {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}

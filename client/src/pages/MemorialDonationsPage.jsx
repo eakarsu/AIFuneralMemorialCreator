@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { memorialDonations, ai } from '../api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 import AIOutput from '../components/AIOutput';
 
 const STATUSES = [
@@ -12,6 +13,7 @@ const STATUSES = [
 const MemorialDonationsPage = ({ showToast }) => {
   const [view, setView] = useState('list');
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -30,14 +32,15 @@ const MemorialDonationsPage = ({ showToast }) => {
   });
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await memorialDonations.getAll();
-      setItems(data);
+      const data = await memorialDonations.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load memorial donations', 'error');
     } finally {
@@ -105,7 +108,7 @@ const MemorialDonationsPage = ({ showToast }) => {
         showToast('Donation created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to save donation', 'error');
     }
@@ -120,7 +123,7 @@ const MemorialDonationsPage = ({ showToast }) => {
       showToast('Donation deleted successfully', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete donation', 'error');
     }
@@ -221,6 +224,7 @@ const MemorialDonationsPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Donation</button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -253,6 +257,12 @@ const MemorialDonationsPage = ({ showToast }) => {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}

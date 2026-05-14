@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { budgetItems } from '../api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 
 const CATEGORIES = [
   'Funeral Home',
@@ -30,6 +31,7 @@ const emptyForm = {
 
 const BudgetTrackerPage = ({ showToast }) => {
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list');
   const [selected, setSelected] = useState(null);
@@ -39,14 +41,15 @@ const BudgetTrackerPage = ({ showToast }) => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await budgetItems.getAll();
-      setItems(data);
+      const data = await budgetItems.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load budget items', 'error');
     } finally {
@@ -128,7 +131,7 @@ const BudgetTrackerPage = ({ showToast }) => {
         showToast('Budget item created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to save budget item', 'error');
     } finally {
@@ -143,7 +146,7 @@ const BudgetTrackerPage = ({ showToast }) => {
       showToast('Budget item deleted', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete budget item', 'error');
     }
@@ -189,6 +192,7 @@ const BudgetTrackerPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Budget Item</button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -221,6 +225,12 @@ const BudgetTrackerPage = ({ showToast }) => {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}

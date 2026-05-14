@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { memorialPages, ai } from '../api'
 import Modal from '../components/Modal'
 import AIOutput from '../components/AIOutput'
+import Pagination from '../components/Pagination';
 
 const emptyForm = {
   deceased_name: '',
@@ -36,6 +37,7 @@ function truncate(text, max = 100) {
 
 export default function MemorialPagesPage({ showToast }) {
   const [items, setItems] = useState([])
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('list')
   const [selected, setSelected] = useState(null)
@@ -47,11 +49,12 @@ export default function MemorialPagesPage({ showToast }) {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiDetails, setAiDetails] = useState('')
 
-  const fetchItems = async () => {
+  const fetchItems = async (page = 1) => {
     setLoading(true)
     try {
-      const data = await memorialPages.getAll()
-      setItems(data)
+      const data = await memorialPages.getAll(page, 20)
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination)
     } catch (err) {
       showToast(err.message || 'Failed to load memorial pages', 'error')
     } finally {
@@ -60,7 +63,7 @@ export default function MemorialPagesPage({ showToast }) {
   }
 
   useEffect(() => {
-    fetchItems()
+    fetchItems(1)
   }, [])
 
   const openCreate = () => {
@@ -104,7 +107,7 @@ export default function MemorialPagesPage({ showToast }) {
         showToast('Memorial page created successfully', 'success')
       }
       setShowModal(false)
-      fetchItems()
+      fetchItems(1)
     } catch (err) {
       showToast(err.message || 'Failed to save memorial page', 'error')
     } finally {
@@ -119,7 +122,7 @@ export default function MemorialPagesPage({ showToast }) {
       showToast('Memorial page deleted', 'success')
       setView('list')
       setSelected(null)
-      fetchItems()
+      fetchItems(1)
     } catch (err) {
       showToast(err.message || 'Failed to delete memorial page', 'error')
     }
@@ -185,6 +188,7 @@ export default function MemorialPagesPage({ showToast }) {
             </button>
           </div>
         ) : (
+          <>
           <div className="grid-3">
             {items.map(item => (
               <div
@@ -225,6 +229,12 @@ export default function MemorialPagesPage({ showToast }) {
               </div>
             ))}
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchItems(p)}
+            />
+          </>
         )}
 
         {showModal && renderModal()}

@@ -265,6 +265,7 @@ CREATE TABLE memorial_pages (
   theme VARCHAR(100) DEFAULT 'classic',
   is_public BOOLEAN DEFAULT TRUE,
   status VARCHAR(50) DEFAULT 'active',
+  slug TEXT UNIQUE,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { obituaries, ai } from '../api';
 import Modal from '../components/Modal';
 import AIOutput from '../components/AIOutput';
+import Pagination from '../components/Pagination';
 
 const ObituariesPage = ({ showToast }) => {
   const [view, setView] = useState('list');
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -22,14 +24,15 @@ const ObituariesPage = ({ showToast }) => {
   });
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await obituaries.getAll();
-      setItems(data);
+      const data = await obituaries.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load obituaries', 'error');
     } finally {
@@ -86,7 +89,7 @@ const ObituariesPage = ({ showToast }) => {
         showToast('Obituary created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(pagination.page);
     } catch (err) {
       showToast('Failed to save obituary', 'error');
     }
@@ -101,7 +104,7 @@ const ObituariesPage = ({ showToast }) => {
       showToast('Obituary deleted successfully', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete obituary', 'error');
     }
@@ -126,9 +129,19 @@ const ObituariesPage = ({ showToast }) => {
       const text = typeof generated === 'string' ? generated : JSON.stringify(generated);
       setAiContent(text);
       setFormData((prev) => ({ ...prev, content: text }));
-      showToast('AI content generated successfully', 'success');
+      if (result.id) {
+        showToast('Obituary saved! View in Obituaries section.', 'success');
+        fetchAll(1);
+        setModalOpen(false);
+      } else {
+        showToast('AI content generated successfully', 'success');
+      }
     } catch (err) {
-      showToast('AI generation failed', 'error');
+      if (err.status === 429) {
+        showToast('AI rate limit reached. Please wait before making more AI requests.', 'error');
+      } else {
+        showToast('AI generation failed', 'error');
+      }
     } finally {
       setAiLoading(false);
     }
@@ -173,30 +186,37 @@ const ObituariesPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Obituary</button>
           </div>
         ) : (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Deceased Name</th>
-                  <th>Birth Date</th>
-                  <th>Death Date</th>
-                  <th>City</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="clickable-row" onClick={() => selectRow(item)}>
-                    <td>{item.deceased_name}</td>
-                    <td>{formatDate(item.birth_date)}</td>
-                    <td>{formatDate(item.death_date)}</td>
-                    <td>{item.city || '—'}</td>
-                    <td>{renderBadge(item.status)}</td>
+          <>
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Deceased Name</th>
+                    <th>Birth Date</th>
+                    <th>Death Date</th>
+                    <th>City</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.id} className="clickable-row" onClick={() => selectRow(item)}>
+                      <td>{item.deceased_name}</td>
+                      <td>{formatDate(item.birth_date)}</td>
+                      <td>{formatDate(item.death_date)}</td>
+                      <td>{item.city || '—'}</td>
+                      <td>{renderBadge(item.status)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}

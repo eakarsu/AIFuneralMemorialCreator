@@ -10,7 +10,11 @@ const getHeaders = () => {
 
 const handleResponse = async (res) => {
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
+  if (!res.ok) {
+    const err = new Error(data.error || 'Request failed');
+    err.status = res.status;
+    throw err;
+  }
   return data;
 };
 
@@ -23,7 +27,8 @@ export const auth = {
 };
 
 const crud = (resource) => ({
-  getAll: () => fetch(`${API}/${resource}`, { headers: getHeaders() }).then(handleResponse),
+  getAll: (page = 1, limit = 20) =>
+    fetch(`${API}/${resource}?page=${page}&limit=${limit}`, { headers: getHeaders() }).then(handleResponse),
   getOne: (id) => fetch(`${API}/${resource}/${id}`, { headers: getHeaders() }).then(handleResponse),
   create: (data) => fetch(`${API}/${resource}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) }).then(handleResponse),
   update: (id, data) => fetch(`${API}/${resource}/${id}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) }).then(handleResponse),
@@ -68,4 +73,18 @@ export const ai = {
   generateCondolence: (data) => fetch(`${API}/ai/generate-condolence`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) }).then(handleResponse),
   generatePrayer: (data) => fetch(`${API}/ai/generate-prayer`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) }).then(handleResponse),
   generateDonationThanks: (data) => fetch(`${API}/ai/generate-donation-thanks`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) }).then(handleResponse),
+};
+
+// Thank-you tracker
+export const thankYouTracker = {
+  getPending: () => fetch(`${API}/thank-you/pending`, { headers: getHeaders() }).then(handleResponse),
+  markSent: (type, id) =>
+    fetch(`${API}/thank-you/${type}/${id}/mark-sent`, { method: 'POST', headers: getHeaders() }).then(handleResponse),
+};
+
+// Public memorial page (no auth)
+export const publicMemorial = {
+  get: (slug) => fetch(`/memorial/${slug}`).then(handleResponse),
+  submitGuestBook: (slug, data) =>
+    fetch(`/memorial/${slug}/guestbook`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handleResponse),
 };

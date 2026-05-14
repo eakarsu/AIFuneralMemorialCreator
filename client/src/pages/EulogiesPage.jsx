@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { eulogies, ai } from '../api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 import AIOutput from '../components/AIOutput';
 
 const EulogiesPage = ({ showToast }) => {
   const [view, setView] = useState('list');
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -22,14 +24,15 @@ const EulogiesPage = ({ showToast }) => {
   });
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await eulogies.getAll();
-      setItems(data);
+      const data = await eulogies.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load eulogies', 'error');
     } finally {
@@ -86,7 +89,7 @@ const EulogiesPage = ({ showToast }) => {
         showToast('Eulogy created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to save eulogy', 'error');
     }
@@ -101,7 +104,7 @@ const EulogiesPage = ({ showToast }) => {
       showToast('Eulogy deleted successfully', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete eulogy', 'error');
     }
@@ -125,9 +128,19 @@ const EulogiesPage = ({ showToast }) => {
       const text = typeof generated === 'string' ? generated : JSON.stringify(generated);
       setAiContent(text);
       setFormData((prev) => ({ ...prev, content: text }));
-      showToast('AI content generated successfully', 'success');
+      if (result.id) {
+        showToast('Eulogy saved! View in Eulogies section.', 'success');
+        fetchAll(1);
+        setModalOpen(false);
+      } else {
+        showToast('AI content generated successfully', 'success');
+      }
     } catch (err) {
-      showToast('AI generation failed', 'error');
+      if (err.status === 429) {
+        showToast('AI rate limit reached. Please wait before making more AI requests.', 'error');
+      } else {
+        showToast('AI generation failed', 'error');
+      }
     } finally {
       setAiLoading(false);
     }
@@ -172,6 +185,7 @@ const EulogiesPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Eulogy</button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -194,6 +208,12 @@ const EulogiesPage = ({ showToast }) => {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}

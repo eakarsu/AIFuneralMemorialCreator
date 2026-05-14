@@ -2,10 +2,25 @@ const router = require('express').Router();
 const pool = require('../db');
 const auth = require('../middleware/auth');
 
+const generateSlug = (name) => {
+  const base = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+  const suffix = Math.random().toString(36).slice(2, 7);
+  return `${base}-${suffix}`;
+};
+
 router.get('/', auth, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM memorial_pages WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
-    res.json(result.rows);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const offset = (page - 1) * limit;
+    const countResult = await pool.query('SELECT COUNT(*) FROM memorial_pages WHERE user_id = $1', [req.user.id]);
+    const total = parseInt(countResult.rows[0].count);
+    const result = await pool.query('SELECT * FROM memorial_pages WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3', [req.user.id, limit, offset]);
+    res.json({ data: result.rows, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -20,9 +35,10 @@ router.get('/:id', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   try {
     const { deceased_name, birth_date, death_date, biography, photo_url, theme, is_public, status } = req.body;
+    const slug = generateSlug(deceased_name || 'memorial');
     const result = await pool.query(
-      'INSERT INTO memorial_pages (user_id, deceased_name, birth_date, death_date, biography, photo_url, theme, is_public, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *',
-      [req.user.id, deceased_name, birth_date || null, death_date || null, biography, photo_url, theme || 'classic', is_public !== false, status || 'active']
+      'INSERT INTO memorial_pages (user_id, deceased_name, birth_date, death_date, biography, photo_url, theme, is_public, status, slug) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',
+      [req.user.id, deceased_name, birth_date || null, death_date || null, biography, photo_url, theme || 'classic', is_public !== false, status || 'active', slug]
     );
     res.json(result.rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }

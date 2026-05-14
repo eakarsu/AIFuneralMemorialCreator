@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { guestBook } from '../api'
 import Modal from '../components/Modal'
+import Pagination from '../components/Pagination';
 
 const emptyForm = {
   deceased_name: '',
@@ -12,6 +13,7 @@ const emptyForm = {
 
 export default function GuestBookPage({ showToast }) {
   const [items, setItems] = useState([])
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('list')
   const [selected, setSelected] = useState(null)
@@ -20,11 +22,12 @@ export default function GuestBookPage({ showToast }) {
   const [form, setForm] = useState({ ...emptyForm })
   const [saving, setSaving] = useState(false)
 
-  const fetchItems = async () => {
+  const fetchItems = async (page = 1) => {
     setLoading(true)
     try {
-      const data = await guestBook.getAll()
-      setItems(data)
+      const data = await guestBook.getAll(page, 20)
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination)
     } catch (err) {
       showToast(err.message || 'Failed to load guest book entries', 'error')
     } finally {
@@ -33,7 +36,7 @@ export default function GuestBookPage({ showToast }) {
   }
 
   useEffect(() => {
-    fetchItems()
+    fetchItems(1)
   }, [])
 
   const openCreate = () => {
@@ -74,7 +77,7 @@ export default function GuestBookPage({ showToast }) {
         showToast('Guest book entry created successfully', 'success')
       }
       setShowModal(false)
-      fetchItems()
+      fetchItems(1)
     } catch (err) {
       showToast(err.message || 'Failed to save guest book entry', 'error')
     } finally {
@@ -89,7 +92,7 @@ export default function GuestBookPage({ showToast }) {
       showToast('Guest book entry deleted', 'success')
       setView('list')
       setSelected(null)
-      fetchItems()
+      fetchItems(1)
     } catch (err) {
       showToast(err.message || 'Failed to delete guest book entry', 'error')
     }
@@ -131,6 +134,7 @@ export default function GuestBookPage({ showToast }) {
             </button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -163,6 +167,12 @@ export default function GuestBookPage({ showToast }) {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchItems(p)}
+            />
+          </>
         )}
 
         {showModal && renderModal()}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { prayersReadings, ai } from '../api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 import AIOutput from '../components/AIOutput';
 
 const CATEGORIES = [
@@ -35,6 +36,7 @@ const OCCASIONS = [
 const PrayersReadingsPage = ({ showToast }) => {
   const [view, setView] = useState('list');
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -52,14 +54,15 @@ const PrayersReadingsPage = ({ showToast }) => {
   });
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await prayersReadings.getAll();
-      setItems(data);
+      const data = await prayersReadings.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load prayers and readings', 'error');
     } finally {
@@ -121,7 +124,7 @@ const PrayersReadingsPage = ({ showToast }) => {
         showToast('Prayer/reading created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to save prayer/reading', 'error');
     }
@@ -136,7 +139,7 @@ const PrayersReadingsPage = ({ showToast }) => {
       showToast('Prayer/reading deleted successfully', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete prayer/reading', 'error');
     }
@@ -238,6 +241,12 @@ const PrayersReadingsPage = ({ showToast }) => {
               </div>
             ))}
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}

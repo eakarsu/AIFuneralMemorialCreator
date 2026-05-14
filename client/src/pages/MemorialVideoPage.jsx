@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { memorialVideos } from '../api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 
 const STATUSES = [
   { value: 'planning', label: 'Planning' },
@@ -11,6 +12,7 @@ const STATUSES = [
 const MemorialVideoPage = ({ showToast }) => {
   const [view, setView] = useState('list');
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -28,14 +30,15 @@ const MemorialVideoPage = ({ showToast }) => {
   });
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await memorialVideos.getAll();
-      setItems(data);
+      const data = await memorialVideos.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load memorial videos', 'error');
     } finally {
@@ -98,7 +101,7 @@ const MemorialVideoPage = ({ showToast }) => {
         showToast('Memorial video created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to save memorial video', 'error');
     } finally {
@@ -115,7 +118,7 @@ const MemorialVideoPage = ({ showToast }) => {
       showToast('Memorial video deleted successfully', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete memorial video', 'error');
     }
@@ -160,6 +163,7 @@ const MemorialVideoPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Video</button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -182,6 +186,12 @@ const MemorialVideoPage = ({ showToast }) => {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}

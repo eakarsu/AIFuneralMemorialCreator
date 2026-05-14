@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { travelAccommodations } from '../api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 
 const STATUSES = [
   { value: 'pending', label: 'Pending' },
@@ -11,6 +12,7 @@ const STATUSES = [
 const TravelAccommodationsPage = ({ showToast }) => {
   const [view, setView] = useState('list');
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -29,14 +31,15 @@ const TravelAccommodationsPage = ({ showToast }) => {
   });
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await travelAccommodations.getAll();
-      setItems(data);
+      const data = await travelAccommodations.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load travel & accommodation records', 'error');
     } finally {
@@ -101,7 +104,7 @@ const TravelAccommodationsPage = ({ showToast }) => {
         showToast('Record created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to save record', 'error');
     } finally {
@@ -118,7 +121,7 @@ const TravelAccommodationsPage = ({ showToast }) => {
       showToast('Record deleted successfully', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete record', 'error');
     }
@@ -168,6 +171,7 @@ const TravelAccommodationsPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Record</button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -194,6 +198,12 @@ const TravelAccommodationsPage = ({ showToast }) => {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { flowerGifts } from '../api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 
 const ITEM_TYPES = [
   'Flowers', 'Fruit Basket', 'Gift Card', 'Memorial Wreath',
@@ -10,6 +11,7 @@ const ITEM_TYPES = [
 const FlowerGiftTrackerPage = ({ showToast }) => {
   const [view, setView] = useState('list');
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -26,14 +28,15 @@ const FlowerGiftTrackerPage = ({ showToast }) => {
   });
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await flowerGifts.getAll();
-      setItems(data);
+      const data = await flowerGifts.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load flower & gift records', 'error');
     } finally {
@@ -94,7 +97,7 @@ const FlowerGiftTrackerPage = ({ showToast }) => {
         showToast('Record created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to save record', 'error');
     } finally {
@@ -111,7 +114,7 @@ const FlowerGiftTrackerPage = ({ showToast }) => {
       showToast('Record deleted successfully', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete record', 'error');
     }
@@ -151,6 +154,7 @@ const FlowerGiftTrackerPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Record</button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -181,6 +185,12 @@ const FlowerGiftTrackerPage = ({ showToast }) => {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { contacts } from '../api'
 import Modal from '../components/Modal'
+import Pagination from '../components/Pagination';
 
 const emptyForm = {
   name: '',
@@ -26,6 +27,7 @@ const relationshipOptions = [
 
 export default function ContactsPage({ showToast }) {
   const [items, setItems] = useState([])
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('list')
   const [selected, setSelected] = useState(null)
@@ -34,11 +36,12 @@ export default function ContactsPage({ showToast }) {
   const [form, setForm] = useState({ ...emptyForm })
   const [saving, setSaving] = useState(false)
 
-  const fetchItems = async () => {
+  const fetchItems = async (page = 1) => {
     setLoading(true)
     try {
-      const data = await contacts.getAll()
-      setItems(data)
+      const data = await contacts.getAll(page, 20)
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination)
     } catch (err) {
       showToast(err.message || 'Failed to load contacts', 'error')
     } finally {
@@ -47,7 +50,7 @@ export default function ContactsPage({ showToast }) {
   }
 
   useEffect(() => {
-    fetchItems()
+    fetchItems(1)
   }, [])
 
   const openCreate = () => {
@@ -88,7 +91,7 @@ export default function ContactsPage({ showToast }) {
         showToast('Contact created successfully', 'success')
       }
       setShowModal(false)
-      fetchItems()
+      fetchItems(1)
     } catch (err) {
       showToast(err.message || 'Failed to save contact', 'error')
     } finally {
@@ -103,7 +106,7 @@ export default function ContactsPage({ showToast }) {
       showToast('Contact deleted', 'success')
       setView('list')
       setSelected(null)
-      fetchItems()
+      fetchItems(1)
     } catch (err) {
       showToast(err.message || 'Failed to delete contact', 'error')
     }
@@ -145,6 +148,7 @@ export default function ContactsPage({ showToast }) {
             </button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -174,6 +178,12 @@ export default function ContactsPage({ showToast }) {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchItems(p)}
+            />
+          </>
         )}
 
         {showModal && renderModal()}

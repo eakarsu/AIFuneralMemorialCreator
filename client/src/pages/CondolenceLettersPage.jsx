@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { condolenceLetters, ai } from '../api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 import AIOutput from '../components/AIOutput';
 
 const TONE_OPTIONS = [
@@ -19,6 +20,7 @@ const TONE_OPTIONS = [
 const CondolenceLettersPage = ({ showToast }) => {
   const [view, setView] = useState('list');
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -36,14 +38,15 @@ const CondolenceLettersPage = ({ showToast }) => {
   });
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await condolenceLetters.getAll();
-      setItems(data);
+      const data = await condolenceLetters.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load condolence letters', 'error');
     } finally {
@@ -102,7 +105,7 @@ const CondolenceLettersPage = ({ showToast }) => {
         showToast('Condolence letter created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to save condolence letter', 'error');
     }
@@ -117,7 +120,7 @@ const CondolenceLettersPage = ({ showToast }) => {
       showToast('Condolence letter deleted successfully', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete condolence letter', 'error');
     }
@@ -141,9 +144,19 @@ const CondolenceLettersPage = ({ showToast }) => {
       const text = typeof generated === 'string' ? generated : JSON.stringify(generated);
       setAiContent(text);
       setFormData((prev) => ({ ...prev, content: text, ai_generated: true }));
-      showToast('AI content generated successfully', 'success');
+      if (result.id) {
+        showToast('Condolence letter saved! View in Condolence Letters section.', 'success');
+        fetchAll(1);
+        setModalOpen(false);
+      } else {
+        showToast('AI content generated successfully', 'success');
+      }
     } catch (err) {
-      showToast('AI generation failed', 'error');
+      if (err.status === 429) {
+        showToast('AI rate limit reached. Please wait before making more AI requests.', 'error');
+      } else {
+        showToast('AI generation failed', 'error');
+      }
     } finally {
       setAiLoading(false);
     }
@@ -193,6 +206,7 @@ const CondolenceLettersPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Condolence Letter</button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -217,6 +231,12 @@ const CondolenceLettersPage = ({ showToast }) => {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { venues } from '../api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 
 const VENUE_TYPES = [
   'Funeral Home',
@@ -26,6 +27,7 @@ const emptyForm = {
 
 const VenuesPage = ({ showToast }) => {
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list');
   const [selected, setSelected] = useState(null);
@@ -35,14 +37,15 @@ const VenuesPage = ({ showToast }) => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await venues.getAll();
-      setItems(data);
+      const data = await venues.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load venues', 'error');
     } finally {
@@ -102,7 +105,7 @@ const VenuesPage = ({ showToast }) => {
         showToast('Venue created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to save venue', 'error');
     } finally {
@@ -117,7 +120,7 @@ const VenuesPage = ({ showToast }) => {
       showToast('Venue deleted', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete venue', 'error');
     }
@@ -157,6 +160,7 @@ const VenuesPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Venue</button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -187,6 +191,12 @@ const VenuesPage = ({ showToast }) => {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}

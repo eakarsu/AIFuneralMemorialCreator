@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { funeralPrograms, ai } from '../api';
 import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
 import AIOutput from '../components/AIOutput';
 
 const SERVICE_TYPES = [
@@ -27,6 +28,7 @@ const TEMPLATES = [
 const FuneralProgramsPage = ({ showToast }) => {
   const [view, setView] = useState('list');
   const [items, setItems] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -46,14 +48,15 @@ const FuneralProgramsPage = ({ showToast }) => {
   });
 
   useEffect(() => {
-    fetchAll();
+    fetchAll(1);
   }, []);
 
-  const fetchAll = async () => {
+  const fetchAll = async (page = 1) => {
     setLoading(true);
     try {
-      const data = await funeralPrograms.getAll();
-      setItems(data);
+      const data = await funeralPrograms.getAll(page, 20);
+      setItems(data.data || data);
+      if (data.pagination) setPagination(data.pagination);
     } catch (err) {
       showToast('Failed to load funeral programs', 'error');
     } finally {
@@ -116,7 +119,7 @@ const FuneralProgramsPage = ({ showToast }) => {
         showToast('Funeral program created successfully', 'success');
       }
       setModalOpen(false);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to save funeral program', 'error');
     }
@@ -131,7 +134,7 @@ const FuneralProgramsPage = ({ showToast }) => {
       showToast('Funeral program deleted successfully', 'success');
       setView('list');
       setSelected(null);
-      fetchAll();
+      fetchAll(1);
     } catch (err) {
       showToast('Failed to delete funeral program', 'error');
     }
@@ -223,6 +226,7 @@ const FuneralProgramsPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Program</button>
           </div>
         ) : (
+          <>
           <div className="table-container">
             <table>
               <thead>
@@ -247,6 +251,12 @@ const FuneralProgramsPage = ({ showToast }) => {
               </tbody>
             </table>
           </div>
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={(p) => fetchAll(p)}
+            />
+          </>
         )}
 
         {modalOpen && renderModal()}
