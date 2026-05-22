@@ -50,6 +50,11 @@ import GapNoSmsemailSendInfrastructureNotifica from './pages/GapNoSmsemailSendIn
 import GapNoPaymentProcessingForDonationsOr from './pages/GapNoPaymentProcessingForDonationsOr';
 import GapNoMultiTenantFuneralHomeOnboarding from './pages/GapNoMultiTenantFuneralHomeOnboarding';
 
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
+import TimelineView from './pages/TimelineView';
+
 export default function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -86,6 +91,10 @@ export default function App() {
   // Public routes accessible without login
   return (
     <Routes>
+        <Route path="/insights/timeline" element={<TimelineView />} />
+        <Route path="/codex/custom-viz" element={<CodexCustomVizFeature />} />
+        <Route path="/codex/operations" element={<CodexOperationsFeature />} />
+
       <Route path="/memorial/:slug" element={<PublicMemorial />} />
       <Route path="/*" element={
         !user ? <Login onLogin={handleLogin} showToast={showToast} /> : (

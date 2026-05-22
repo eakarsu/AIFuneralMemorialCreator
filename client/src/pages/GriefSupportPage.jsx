@@ -185,6 +185,7 @@ const GriefSupportPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Session</button>
           </div>
         ) : (
+          <>
           <div className="grid-2">
             {items.map((item) => (
               <div

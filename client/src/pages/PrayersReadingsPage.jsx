@@ -222,6 +222,7 @@ const PrayersReadingsPage = ({ showToast }) => {
             <button className="btn-primary" onClick={openCreate}>+ New Prayer/Reading</button>
           </div>
         ) : (
+          <>
           <div className="grid-3">
             {items.map((item) => (
               <div key={item.id} className="card clickable-row" onClick={() => selectCard(item)}>
