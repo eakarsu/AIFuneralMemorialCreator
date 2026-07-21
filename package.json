@@ -8,7 +8,8 @@
     "server": "nodemon server/index.js",
     "client": "cd client && npm run dev",
     "seed": "node server/seed.js",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "test": "node --test server/tests/*.test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
