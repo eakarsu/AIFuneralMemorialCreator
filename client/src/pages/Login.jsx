@@ -76,7 +76,7 @@ export default function Login({ onLogin, showToast }) {
 
         <div style={{ marginTop: 20 }}>
           <button onClick={fillDemo} className="btn-gold" style={{ width: '100%', marginBottom: 12 }}>
-            Fill Demo Credentials
+            Auto Fill Demo Credentials
           </button>
           <div style={{ textAlign: 'center' }}>
             <button
