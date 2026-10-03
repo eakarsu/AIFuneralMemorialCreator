@@ -1,3 +1,4 @@
+import AppSidebar from './components/AppSidebar';
 import React, { useState, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
@@ -98,7 +99,9 @@ export default function App() {
       <Route path="/memorial/:slug" element={<PublicMemorial />} />
       <Route path="/*" element={
         !user ? <Login onLogin={handleLogin} showToast={showToast} /> : (
-          <div>
+          <div className="codex-nav-shell">
+            <AppSidebar />
+            <div className="codex-protected-main">
             <Navbar user={user} onLogout={handleLogout} />
             <div className="container" style={{ paddingTop: 24, paddingBottom: 40 }}>
               <Routes>
@@ -151,6 +154,7 @@ export default function App() {
               </Routes>
             </div>
             {toast && <Toast message={toast.message} type={toast.type} />}
+            </div>
           </div>
         )
       } />
