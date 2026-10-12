@@ -18,6 +18,15 @@ const handleResponse = async (res) => {
   return data;
 };
 
+// List routes normally return { data, pagination }. Keep that contract even
+// when a route returns a bare array, and surface malformed payloads as errors
+// before a record page attempts to call array methods on them.
+export const readListResponse = (payload) => {
+  if (Array.isArray(payload)) return { data: payload };
+  if (payload && Array.isArray(payload.data)) return payload;
+  throw new Error('The server returned an invalid record list.');
+};
+
 export const auth = {
   login: (email, password) =>
     fetch(`${API}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }).then(handleResponse),
@@ -28,7 +37,7 @@ export const auth = {
 
 const crud = (resource) => ({
   getAll: (page = 1, limit = 20) =>
-    fetch(`${API}/${resource}?page=${page}&limit=${limit}`, { headers: getHeaders() }).then(handleResponse),
+    fetch(`${API}/${resource}?page=${page}&limit=${limit}`, { headers: getHeaders() }).then(handleResponse).then(readListResponse),
   getOne: (id) => fetch(`${API}/${resource}/${id}`, { headers: getHeaders() }).then(handleResponse),
   create: (data) => fetch(`${API}/${resource}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) }).then(handleResponse),
   update: (id, data) => fetch(`${API}/${resource}/${id}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) }).then(handleResponse),
@@ -77,7 +86,7 @@ export const ai = {
 
 // Thank-you tracker
 export const thankYouTracker = {
-  getPending: () => fetch(`${API}/thank-you/pending`, { headers: getHeaders() }).then(handleResponse),
+  getPending: () => fetch(`${API}/thank-you/pending`, { headers: getHeaders() }).then(handleResponse).then(readListResponse),
   markSent: (type, id) =>
     fetch(`${API}/thank-you/${type}/${id}/mark-sent`, { method: 'POST', headers: getHeaders() }).then(handleResponse),
 };

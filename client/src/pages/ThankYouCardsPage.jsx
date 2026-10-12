@@ -1,8 +1,11 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { thankYouCards, ai } from '../api';
 import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import AIOutput from '../components/AIOutput';
+import NativeAIControls from '../components/NativeAIControls';
 
 const ThankYouCardsPage = ({ showToast }) => {
   const [view, setView] = useState('list');
@@ -234,7 +237,7 @@ const ThankYouCardsPage = ({ showToast }) => {
   // ── Detail View ──
   if (view === 'detail' && selected) {
     return (
-      <div className="detail-view">
+      <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
         <a className="back-link" onClick={() => { setView('list'); setSelected(null); }}>
           ← Back to Thank You Cards
         </a>
@@ -283,14 +286,14 @@ const ThankYouCardsPage = ({ showToast }) => {
         <div className="card detail-content">
           <h3>Message</h3>
           {selected.message ? (
-            <div style={{ whiteSpace: 'pre-wrap' }}>{selected.message}</div>
+            <AIOutput content={selected.message} />
           ) : (
             <p className="empty-state">No message content yet.</p>
           )}
         </div>
 
         {modalOpen && renderModal()}
-      </div>
+      </AIWorkspaceModal>
     );
   }
 
@@ -298,6 +301,7 @@ const ThankYouCardsPage = ({ showToast }) => {
   function renderModal() {
     return (
       <Modal title={editing ? 'Edit Thank You Card' : 'New Thank You Card'} onClose={() => setModalOpen(false)}>
+        <NativeAIControls busy={aiLoading} context="memorial planning">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Recipient Name *</label>
@@ -386,6 +390,7 @@ const ThankYouCardsPage = ({ showToast }) => {
             <button type="submit" className="btn-primary">{editing ? 'Update' : 'Create'}</button>
           </div>
         </form>
+        </NativeAIControls>
       </Modal>
     );
   }

@@ -1,7 +1,10 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react'
 import { estateItems, ai } from '../api'
 import Modal from '../components/Modal'
 import AIOutput from '../components/AIOutput'
+import NativeAIControls from '../components/NativeAIControls'
 import Pagination from '../components/Pagination';
 
 const emptyForm = {
@@ -264,7 +267,7 @@ export default function EstateItemsPage({ showToast }) {
   // ---------- Detail View ----------
   if (view === 'detail' && selected) {
     return (
-      <div className="detail-view">
+      <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
         <div className="detail-header">
           <span className="back-link" onClick={backToList} style={{ cursor: 'pointer' }}>
             &larr; Back to Estate Items
@@ -321,7 +324,7 @@ export default function EstateItemsPage({ showToast }) {
         </div>
 
         {showModal && renderModal()}
-      </div>
+      </AIWorkspaceModal>
     )
   }
 
@@ -332,6 +335,7 @@ export default function EstateItemsPage({ showToast }) {
         title={editing ? 'Edit Estate Item' : 'New Estate Item'}
         onClose={() => setShowModal(false)}
       >
+        <NativeAIControls busy={aiLoading} context="memorial planning">
         <div className="form-group">
           <label>Title *</label>
           <input
@@ -456,6 +460,7 @@ export default function EstateItemsPage({ showToast }) {
             {saving ? 'Saving...' : editing ? 'Update Estate Item' : 'Create Estate Item'}
           </button>
         </div>
+        </NativeAIControls>
       </Modal>
     )
   }

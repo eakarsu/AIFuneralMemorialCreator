@@ -1,3 +1,8 @@
+
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples.jsx";
+import NativeAIControls from "../components/NativeAIControls";
+import useNativeAIRequest from "../components/useNativeAIRequest";
+import FormattedAIReport from "../components/FormattedAIReport";
 import React, { useState } from 'react'
 import { ai as aiBase } from '../api'
 
@@ -21,12 +26,12 @@ function getHeaders() {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   }
 }
-async function callAI(path, body) {
-  const res = await fetch(`${API}${path}`, {
+async function callAI(path, body, nativeRequestOptions = {}) {
+  const res = await fetch(`${API}${path}`, { ...({
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify(body || {}),
-  })
+  }), ...(nativeRequestOptions) })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || 'Request failed')
   return data
@@ -49,32 +54,18 @@ function ResultDisplay({ result, error }) {
   }
   if (!result) return null
 
-  const text =
-    result.guide ||
-    result.narrative ||
-    result.recommendations ||
-    result.content ||
-    result.text ||
-    result.markdown ||
-    ''
-
   return (
     <div className="card" style={{ padding: 20, marginTop: 16 }}>
-      <h3 style={{ fontFamily: 'Playfair Display, serif', marginTop: 0 }}>Result</h3>
-      {text ? (
-        <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'Georgia, serif', lineHeight: 1.7, fontSize: 15 }}>
-          {typeof text === 'string' ? text : JSON.stringify(text, null, 2)}
-        </pre>
-      ) : (
-        <pre style={{ background: '#f5f5f5', padding: 12, borderRadius: 6, fontSize: 13, overflow: 'auto' }}>
-          {JSON.stringify(result, null, 2)}
-        </pre>
-      )}
+      <FormattedAIReport response={result.guide ?? result.narrative ?? result.recommendations ?? result.content ?? result.text ?? result.markdown ?? result} title="AI result" />
     </div>
   )
 }
 
 export default function AILegacyToolsPage({ showToast }) {
+  const fullAIExamples = useFullAIExamples();
+
+  const nativeAIRequest = useNativeAIRequest();
+
   const [tab, setTab] = useState('legacy-interview-guide')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
@@ -139,7 +130,7 @@ export default function AILegacyToolsPage({ showToast }) {
           geographic_focus: donationsForm.geographic_focus,
         }
       }
-      const r = await callAI(path, body)
+      const r = await nativeAIRequest.run((signal) => callAI(path, body, { signal }))
       setResult(r)
       showToast?.('AI response generated', 'success')
     } catch (e) {
@@ -151,7 +142,7 @@ export default function AILegacyToolsPage({ showToast }) {
   }
 
   return (
-    <div>
+    <NativeAIControls busy={nativeAIRequest.busy} onCancel={nativeAIRequest.cancel} context="Funeral Memorial Creator"><div data-full-ai-workspace="AILegacyToolsPage"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} /><div>
       <div className="page-header" style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: 'Playfair Display, serif', margin: 0 }}>AI Legacy Tools</h1>
         <p style={{ color: '#7f8c8d', marginTop: 4 }}>
@@ -184,11 +175,11 @@ export default function AILegacyToolsPage({ showToast }) {
             <div className="form-row" style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr', marginBottom: 12 }}>
               <div>
                 <label>Subject name</label>
-                <input value={legacyForm.subject_name} onChange={(e) => setLegacyForm({ ...legacyForm, subject_name: e.target.value })} />
+                <input data-ai-field="subject_name" value={legacyForm.subject_name} onChange={(e) => setLegacyForm({ ...legacyForm, subject_name: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: legacyForm.subject_name, change: (e) => setLegacyForm({ ...legacyForm, subject_name: e.target.value }), label: "legacyForm.subject_name", manual: false, json: false, sample: '' }, "p1-6389", undefined)} />
               </div>
               <div>
                 <label>Relationship</label>
-                <select value={legacyForm.relationship} onChange={(e) => setLegacyForm({ ...legacyForm, relationship: e.target.value })}>
+                <select data-ai-field="relationship" value={legacyForm.relationship} onChange={(e) => setLegacyForm({ ...legacyForm, relationship: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: legacyForm.relationship, change: (e) => setLegacyForm({ ...legacyForm, relationship: e.target.value }), label: "legacyForm.relationship", manual: false, json: false, sample: 'parent' }, "p1-6642", undefined)}>
                   <option value="parent">Parent</option>
                   <option value="grandparent">Grandparent</option>
                   <option value="sibling">Sibling</option>
@@ -199,16 +190,16 @@ export default function AILegacyToolsPage({ showToast }) {
               </div>
               <div>
                 <label>Interview length (minutes)</label>
-                <input type="number" min="15" value={legacyForm.interview_length_minutes}
-                  onChange={(e) => setLegacyForm({ ...legacyForm, interview_length_minutes: e.target.value })} />
+                <input data-ai-field="interview_length_minutes" type="number" min="15" value={legacyForm.interview_length_minutes}
+                  onChange={(e) => setLegacyForm({ ...legacyForm, interview_length_minutes: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: legacyForm.interview_length_minutes, change: (e) => setLegacyForm({ ...legacyForm, interview_length_minutes: e.target.value }), label: "legacyForm.interview_length_minutes", manual: false, json: false, sample: 60 }, "p1-7296", undefined)} />
               </div>
             </div>
             <div>
               <label>Sensitivity notes (optional)</label>
-              <textarea rows={3}
+              <textarea data-ai-field="sensitivity_notes" rows={3}
                 value={legacyForm.sensitivity_notes}
                 placeholder="Topics to handle gently, recent losses, language preferences..."
-                onChange={(e) => setLegacyForm({ ...legacyForm, sensitivity_notes: e.target.value })}
+                onChange={(e) => setLegacyForm({ ...legacyForm, sensitivity_notes: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: legacyForm.sensitivity_notes, change: (e) => setLegacyForm({ ...legacyForm, sensitivity_notes: e.target.value }), label: "legacyForm.sensitivity_notes", manual: false, json: false, sample: '' }, "p1-7655", undefined)}
               />
             </div>
           </>
@@ -218,11 +209,11 @@ export default function AILegacyToolsPage({ showToast }) {
           <>
             <h2 style={{ fontFamily: 'Playfair Display, serif', marginTop: 0 }}>Timeline Narrative</h2>
             <p style={{ color: '#7f8c8d' }}>One event per line — date or year first, then a short description.</p>
-            <textarea
+            <textarea data-ai-field="eventsText"
               rows={10}
               value={eventsText}
               onChange={(e) => setEventsText(e.target.value)}
-              style={{ fontFamily: 'monospace', fontSize: 13 }}
+              style={{ fontFamily: 'monospace', fontSize: 13 }} data-full-ai-field={fullAIExamples.bind({ current: eventsText, change: (e) => setEventsText(e.target.value), label: "eventsText", manual: false, json: false, sample: '1942-04-12: Born in Trenton, NJ\n1960: Graduated high school\n1962-1966: US Navy service\n1968: Married Eleanor\n1970, 1972, 1975: Children born' }, "p1-8306", undefined)}
             />
           </>
         )}
@@ -234,22 +225,22 @@ export default function AILegacyToolsPage({ showToast }) {
             <div className="form-row" style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr', marginBottom: 12 }}>
               <div>
                 <label>Deceased / honoree name</label>
-                <input value={donationsForm.deceased_name} onChange={(e) => setDonationsForm({ ...donationsForm, deceased_name: e.target.value })} />
+                <input data-ai-field="deceased_name" value={donationsForm.deceased_name} onChange={(e) => setDonationsForm({ ...donationsForm, deceased_name: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: donationsForm.deceased_name, change: (e) => setDonationsForm({ ...donationsForm, deceased_name: e.target.value }), label: "donationsForm.deceased_name", manual: false, json: false, sample: '' }, "p1-9051", undefined)} />
               </div>
               <div>
                 <label>Geographic focus (optional)</label>
-                <input value={donationsForm.geographic_focus} onChange={(e) => setDonationsForm({ ...donationsForm, geographic_focus: e.target.value })} />
+                <input data-ai-field="geographic_focus" value={donationsForm.geographic_focus} onChange={(e) => setDonationsForm({ ...donationsForm, geographic_focus: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: donationsForm.geographic_focus, change: (e) => setDonationsForm({ ...donationsForm, geographic_focus: e.target.value }), label: "donationsForm.geographic_focus", manual: false, json: false, sample: '' }, "p1-9331", undefined)} />
               </div>
             </div>
             <div style={{ marginBottom: 12 }}>
               <label>Values</label>
-              <textarea rows={3} value={donationsForm.values} placeholder="What did they care about? E.g., literacy, equal opportunity, animal welfare..."
-                onChange={(e) => setDonationsForm({ ...donationsForm, values: e.target.value })} />
+              <textarea data-ai-field="values" rows={3} value={donationsForm.values} placeholder="What did they care about? E.g., literacy, equal opportunity, animal welfare..."
+                onChange={(e) => setDonationsForm({ ...donationsForm, values: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: donationsForm.values, change: (e) => setDonationsForm({ ...donationsForm, values: e.target.value }), label: "donationsForm.values", manual: false, json: false, sample: '' }, "p1-9641", undefined)} />
             </div>
             <div>
               <label>Causes (comma-separated)</label>
-              <input value={donationsForm.causes} placeholder="e.g., education, veterans, conservation"
-                onChange={(e) => setDonationsForm({ ...donationsForm, causes: e.target.value })} />
+              <input data-ai-field="causes" value={donationsForm.causes} placeholder="e.g., education, veterans, conservation"
+                onChange={(e) => setDonationsForm({ ...donationsForm, causes: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: donationsForm.causes, change: (e) => setDonationsForm({ ...donationsForm, causes: e.target.value }), label: "donationsForm.causes", manual: false, json: false, sample: '' }, "p1-10010", undefined)} />
             </div>
           </>
         )}
@@ -262,6 +253,6 @@ export default function AILegacyToolsPage({ showToast }) {
       </div>
 
       <ResultDisplay result={result} error={error} />
-    </div>
+    </div></div></NativeAIControls>
   )
 }

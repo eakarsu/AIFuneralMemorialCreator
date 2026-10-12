@@ -1,7 +1,10 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { obituaries, ai } from '../api';
 import Modal from '../components/Modal';
 import AIOutput from '../components/AIOutput';
+import NativeAIControls from '../components/NativeAIControls';
 import Pagination from '../components/Pagination';
 
 const ObituariesPage = ({ showToast }) => {
@@ -227,7 +230,7 @@ const ObituariesPage = ({ showToast }) => {
   // ── Detail View ──
   if (view === 'detail' && selected) {
     return (
-      <div className="detail-view">
+      <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
         <a className="back-link" onClick={() => { setView('list'); setSelected(null); }}>
           ← Back to Obituaries
         </a>
@@ -264,14 +267,14 @@ const ObituariesPage = ({ showToast }) => {
         <div className="card detail-content">
           <h3>Obituary Content</h3>
           {selected.content ? (
-            <div style={{ whiteSpace: 'pre-wrap' }}>{selected.content}</div>
+            <AIOutput content={selected.content} />
           ) : (
             <p className="empty-state">No content yet.</p>
           )}
         </div>
 
         {modalOpen && renderModal()}
-      </div>
+      </AIWorkspaceModal>
     );
   }
 
@@ -279,6 +282,7 @@ const ObituariesPage = ({ showToast }) => {
   function renderModal() {
     return (
       <Modal title={editing ? 'Edit Obituary' : 'New Obituary'} onClose={() => setModalOpen(false)}>
+        <NativeAIControls busy={aiLoading} context="memorial planning">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Deceased Name *</label>
@@ -361,6 +365,7 @@ const ObituariesPage = ({ showToast }) => {
             <button type="submit" className="btn-primary">{editing ? 'Update' : 'Create'}</button>
           </div>
         </form>
+        </NativeAIControls>
       </Modal>
     );
   }

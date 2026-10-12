@@ -25,9 +25,12 @@ export default function Login({ onLogin, showToast }) {
   }
 
   const fillDemo = () => {
-    setEmail(import.meta.env.VITE_DEMO_EMAIL || '')
-    setPassword(import.meta.env.VITE_DEMO_PASSWORD || '')
+    setIsRegister(false)
+    setEmail(import.meta.env.VITE_DEMO_EMAIL)
+    setPassword(import.meta.env.VITE_DEMO_PASSWORD)
   }
+  const demoAvailable = import.meta.env.VITE_ENABLE_DEMO_CREDENTIAL_AUTOFILL === 'true'
+    && Boolean(import.meta.env.VITE_DEMO_EMAIL && import.meta.env.VITE_DEMO_PASSWORD)
 
   return (
     <div style={{
@@ -75,9 +78,10 @@ export default function Login({ onLogin, showToast }) {
         </form>
 
         <div style={{ marginTop: 20 }}>
-          <button onClick={fillDemo} className="btn-gold" style={{ width: '100%', marginBottom: 12 }}>
-            Auto Fill Demo Credentials
+          <button type="button" onClick={fillDemo} disabled={!demoAvailable || loading} className="btn-gold" style={{ width: '100%', marginBottom: 12 }}>
+            Fill Demo Credentials
           </button>
+          {!demoAvailable && <p style={{ fontSize: 13, color: '#7f8c8d' }}>Demo credentials are unavailable in this local configuration.</p>}
           <div style={{ textAlign: 'center' }}>
             <button
               onClick={() => setIsRegister(!isRegister)}

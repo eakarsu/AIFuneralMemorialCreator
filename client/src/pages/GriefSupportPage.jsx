@@ -1,8 +1,11 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { griefSupport, ai } from '../api';
 import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import AIOutput from '../components/AIOutput';
+import NativeAIControls from '../components/NativeAIControls';
 
 const SESSION_TYPES = [
   'general',
@@ -231,7 +234,7 @@ const GriefSupportPage = ({ showToast }) => {
   // ── Detail View ──
   if (view === 'detail' && selected) {
     return (
-      <div className="detail-view">
+      <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
         <a className="back-link" onClick={() => { setView('list'); setSelected(null); }}>
           ← Back to Grief Support
         </a>
@@ -279,7 +282,7 @@ const GriefSupportPage = ({ showToast }) => {
         </div>
 
         {modalOpen && renderModal()}
-      </div>
+      </AIWorkspaceModal>
     );
   }
 
@@ -287,6 +290,7 @@ const GriefSupportPage = ({ showToast }) => {
   function renderModal() {
     return (
       <Modal title="New Session" onClose={() => setModalOpen(false)}>
+        <NativeAIControls busy={aiLoading} context="memorial planning">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Topic *</label>
@@ -365,6 +369,7 @@ const GriefSupportPage = ({ showToast }) => {
             <button type="submit" className="btn-primary">Create Session</button>
           </div>
         </form>
+        </NativeAIControls>
       </Modal>
     );
   }

@@ -1,3 +1,5 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { travelAccommodations } from '../api';
 import Modal from '../components/Modal';
@@ -214,7 +216,7 @@ const TravelAccommodationsPage = ({ showToast }) => {
   // ── Detail View ──
   if (view === 'detail' && selected) {
     return (
-      <div className="detail-view">
+      <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
         <a className="back-link" onClick={() => { setView('list'); setSelected(null); }}>
           ← Back to Travel & Accommodations
         </a>
@@ -271,7 +273,7 @@ const TravelAccommodationsPage = ({ showToast }) => {
         </div>
 
         {modalOpen && renderModal()}
-      </div>
+      </AIWorkspaceModal>
     );
   }
 

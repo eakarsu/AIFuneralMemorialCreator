@@ -1,3 +1,5 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { budgetItems } from '../api';
 import Modal from '../components/Modal';
@@ -241,7 +243,7 @@ const BudgetTrackerPage = ({ showToast }) => {
   // ── Detail View ──
   if (view === 'detail' && selected) {
     return (
-      <div className="detail-view">
+      <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
         <a className="back-link" onClick={() => { setView('list'); setSelected(null); }} style={{ cursor: 'pointer' }}>
           &larr; Back to Budget Tracker
         </a>
@@ -303,7 +305,7 @@ const BudgetTrackerPage = ({ showToast }) => {
         )}
 
         {modalOpen && renderModal()}
-      </div>
+      </AIWorkspaceModal>
     );
   }
 

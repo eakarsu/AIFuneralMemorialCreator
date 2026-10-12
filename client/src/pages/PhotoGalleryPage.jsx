@@ -1,3 +1,5 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react'
 import { photoGallery } from '../api'
 import Modal from '../components/Modal'
@@ -182,7 +184,7 @@ export default function PhotoGalleryPage({ showToast }) {
   // ---------- Detail View ----------
   if (view === 'detail' && selected) {
     return (
-      <div className="detail-view">
+      <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
         <div className="detail-header">
           <span className="back-link" onClick={backToList} style={{ cursor: 'pointer' }}>
             &larr; Back to Photo Gallery
@@ -233,7 +235,7 @@ export default function PhotoGalleryPage({ showToast }) {
         </div>
 
         {showModal && renderModal()}
-      </div>
+      </AIWorkspaceModal>
     )
   }
 

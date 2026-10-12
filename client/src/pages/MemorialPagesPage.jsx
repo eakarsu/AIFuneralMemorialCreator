@@ -1,7 +1,10 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react'
 import { memorialPages, ai } from '../api'
 import Modal from '../components/Modal'
 import AIOutput from '../components/AIOutput'
+import NativeAIControls from '../components/NativeAIControls'
 import Pagination from '../components/Pagination';
 
 const emptyForm = {
@@ -245,7 +248,7 @@ export default function MemorialPagesPage({ showToast }) {
   // ---------- Detail View ----------
   if (view === 'detail' && selected) {
     return (
-      <div className="detail-view">
+      <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
         <div className="detail-header">
           <span className="back-link" onClick={backToList} style={{ cursor: 'pointer' }}>
             &larr; Back to Memorial Pages
@@ -295,9 +298,7 @@ export default function MemorialPagesPage({ showToast }) {
 
           <div className="detail-field">
             <label>Biography</label>
-            <div style={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-              {selected.biography || 'No biography provided.'}
-            </div>
+            {selected.biography ? <AIOutput content={selected.biography} /> : 'No biography provided.'}
           </div>
 
           {selected.photo_url && (
@@ -309,7 +310,7 @@ export default function MemorialPagesPage({ showToast }) {
         </div>
 
         {showModal && renderModal()}
-      </div>
+      </AIWorkspaceModal>
     )
   }
 
@@ -320,6 +321,7 @@ export default function MemorialPagesPage({ showToast }) {
         title={editing ? 'Edit Memorial Page' : 'Create Memorial Page'}
         onClose={() => setShowModal(false)}
       >
+        <NativeAIControls busy={aiLoading} context="memorial planning">
         <div className="form-group">
           <label>Deceased Name *</label>
           <input
@@ -435,6 +437,7 @@ export default function MemorialPagesPage({ showToast }) {
             {saving ? 'Saving...' : editing ? 'Update Memorial Page' : 'Create Memorial Page'}
           </button>
         </div>
+        </NativeAIControls>
       </Modal>
     )
   }

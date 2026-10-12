@@ -1,8 +1,11 @@
+import AIWorkspaceModal from '../components/AIWorkspaceModal';
+import '../components/AIWorkspace.css';
 import React, { useState, useEffect } from 'react';
 import { eulogies, ai } from '../api';
 import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import AIOutput from '../components/AIOutput';
+import NativeAIControls from '../components/NativeAIControls';
 
 const EulogiesPage = ({ showToast }) => {
   const [view, setView] = useState('list');
@@ -224,7 +227,7 @@ const EulogiesPage = ({ showToast }) => {
   // ── Detail View ──
   if (view === 'detail' && selected) {
     return (
-      <div className="detail-view">
+      <AIWorkspaceModal title="Record details" onClose={() => setSelected(null)}>
         <a className="back-link" onClick={() => { setView('list'); setSelected(null); }}>
           ← Back to Eulogies
         </a>
@@ -261,14 +264,14 @@ const EulogiesPage = ({ showToast }) => {
         <div className="card detail-content">
           <h3>Eulogy Content</h3>
           {selected.content ? (
-            <div style={{ whiteSpace: 'pre-wrap' }}>{selected.content}</div>
+            <AIOutput content={selected.content} />
           ) : (
             <p className="empty-state">No content yet.</p>
           )}
         </div>
 
         {modalOpen && renderModal()}
-      </div>
+      </AIWorkspaceModal>
     );
   }
 
@@ -276,6 +279,7 @@ const EulogiesPage = ({ showToast }) => {
   function renderModal() {
     return (
       <Modal title={editing ? 'Edit Eulogy' : 'New Eulogy'} onClose={() => setModalOpen(false)}>
+        <NativeAIControls busy={aiLoading} context="memorial planning">
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Deceased Name *</label>
@@ -362,6 +366,7 @@ const EulogiesPage = ({ showToast }) => {
             <button type="submit" className="btn-primary">{editing ? 'Update' : 'Create'}</button>
           </div>
         </form>
+        </NativeAIControls>
       </Modal>
     );
   }

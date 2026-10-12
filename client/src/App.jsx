@@ -1,3 +1,4 @@
+import AIReportLibrary from "./components/AIReportLibrary";
 import AppSidebar from './components/AppSidebar';
 import React, { useState, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
@@ -91,7 +92,7 @@ export default function App() {
 
   // Public routes accessible without login
   return (
-    <Routes>
+    <><AIReportLibrary floating /><Routes>
         <Route path="/insights/timeline" element={<TimelineView />} />
         <Route path="/codex/custom-viz" element={<CodexCustomVizFeature />} />
         <Route path="/codex/operations" element={<CodexOperationsFeature />} />
@@ -158,6 +159,6 @@ export default function App() {
           </div>
         )
       } />
-    </Routes>
+    </Routes></>
   )
 }

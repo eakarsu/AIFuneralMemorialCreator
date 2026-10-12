@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -57,6 +57,28 @@ app.use('/api/family-tree', aiRateLimiter, require('./routes/familyTreeAutoCompl
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/governed-memorials', require('./routes/governedMemorials'));
 
+
+// Advisory AI reports only; native execution and approval routes stay unchanged.
+const aiWorkspaceSupport = require("./aiWorkspaceAdapters.cjs");
+const aiWorkspaceDatabase = require("./db.js");
+app.use('/api/report-workspace', require("./aiWorkspace.cjs").createAIWorkspaceRouter({
+  pool: aiWorkspaceDatabase, authenticateToken: require("./middleware/auth.js"),
+  aiRateLimiter: aiWorkspaceSupport.createWorkspaceLimiter(), features: require("./aiWorkspaceFeatures.json"),
+}));
+// Gap-feature AI endpoints (POST /api/<slug>) — mounted before the error handler so they are reachable.
+for (const gapSlug of [
+  'gap-no-donations-matching-causes-by-deceased',
+  'gap-no-grief-stage-classifier-exposed-to',
+  'gap-no-legacy-interview-guide-endpoint-quest',
+  'gap-no-multi-tenant-funeral-home-onboarding',
+  'gap-no-payment-processing-for-donations-or',
+  'gap-no-real-time-chat-between-family',
+  'gap-no-smsemail-send-infrastructure-notifica',
+  'gap-no-timeline-narrative-synthesis-weave-li',
+  'gap-no-webhook-receivers-for-online-tribute',
+]) {
+  app.use(`/api/${gapSlug}`, require(`./routes/${gapSlug}`));
+}
 app.use((error, req, res, next) => {
   console.error('[request error]', error.message);
   res.status(500).json({ error: 'Internal server error' });
